@@ -1,35 +1,29 @@
-from telethon import TelegramClient, events
 import os
-import importlib
-from config import API_ID, API_HASH, SESSION_STRING
+import logging
+from telethon import TelegramClient
+from config import API_ID, API_HASH, SESSION_STRING  # Ensure your config.py has these defined
 
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+
+# Create the Telegram client
 client = TelegramClient('user_bot', API_ID, API_HASH)
 
 async def main():
-    try:
-        await client.start(SESSION_STRING)
-        print("Client started successfully.")
-    except Exception as e:
-        print(f"An error occurred while starting the client: {e}")
+    # Start the client using the session string
+    await client.start(session=SESSION_STRING)
 
-# Import all plugins
-for filename in os.listdir('plugin'):
-    if filename.endswith('.py'):
-        try:
-            importlib.import_module(f'plugin.{filename[:-3]}')
-            print(f"Successfully imported plugin: {filename}")
-        except Exception as e:
-            print(f"Failed to import plugin {filename}: {e}")
+    logging.info("User bot started successfully.")
 
-@client.on(events.NewMessage)
-async def handler(event):
-    try:
-        # Assuming you have a method to process the event
-        print(f"Received message: {event.message.text}")
-        # Your event processing logic goes here
-    except Exception as e:
-        print(f"An error occurred while processing an event: {e}")
+    # Load command plugins
+    for filename in os.listdir("plugin"):
+        if filename.endswith(".py"):
+            module_name = filename[:-3]  # Remove the .py extension
+            __import__(f"plugin.{module_name}")
 
-if __name__ == '__main__':
-    client.loop.run_until_complete(main())
-    client.run_until_disconnected()
+    # Keep the bot running until disconnected
+    await client.run_until_disconnected()
+
+if __name__ == "__main__":
+    with client:
+        client.loop.run_until_complete(main())
